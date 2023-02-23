@@ -1,0 +1,87 @@
+general:
+  seed: 0
+  device: "cuda"
+  device_ids: [ 2 ]
+  models_path: RES_all_train_TT_net_cifar/ #path to save model and logs
+  num_workers: 2
+  checkpoint: 5
+
+model:
+  famille: TTnet #model_general # model_general
+  cbd: "" # 1,3 or ""
+  first_layer: bin #BNs #bin float binpos
+  quant_step: 0.064
+  preprocessing_CNN: [ 60,4,2,1 ] # filter, kernel_size, stride, padding
+  last_layer: MLPbin #bin, binpos
+  g_remove_last_bn: False
+  type_blocks: [ "multihead_TTblock_mini" ] #["TTblock", "TTblock"] #["TTblock2", "TTblock", "TTblock2", "TTblock"] # TTblock, multihead_TTblock
+  Blocks_filters_output: [ 60 ] #[30, 30, 30, 60] # number of filters in each block
+  Blocks_amplifications: [ 8 ] #[8,8,8,8] # amplification in each block
+  Blocks_strides: [ 1 ] #[3,2] #[2,1,1,1] # stride in the first layer in each block
+  type_first_layer_block: float
+  kernel_size_per_block: [ 4,2 ] #[3,2] #[3,2,3,2]
+  groups_per_block: [ 1,4 ] #[1,2] #[1,2,1,2]
+  padding_per_block: [ 2,1 ] #[0,0,0,0]
+  kernel_size_per_block_multihead: (3,2,2)
+  groups_per_block_multihead: (1,2,2)
+  paddings_per_block_multihead: (0,0,0)
+  thr_bin_act: [ 0.1,0.1,0.1 ] #[0.1, 0.3, 0.3, 0.3, 0.3]
+
+
+
+
+train:
+  n_epoch: 90
+  adv_epsilon: min(epoch/45, 1)*2/255  #min(epoch/100, 1)*16/255
+  adv_step: min(epoch/25,0.9)*10+1 #min(epoch/50,0.9)*10+1
+  lr: 0.0005 #0.001 #0.0005
+  data_augmentation: True
+
+
+eval:
+  thr_bin_act_test: [ 0.0, 0.2, 0.2 ] #[0.0,0.0,0.0] #[0.0, 0.0, 0.0, 0.0, 0.0]
+  batch_size_test: 100
+  pruning: Yes
+  coef_mul: 100
+  path_load_model: ./RES_all_train_TT_net_cifar/2022_12_08_17_37_51_179118/
+    #./RES_all_train_TT_net_cifar/2022_11_24_11_21_01_889318/
+    #res_finaux/CIFAR10_model_base_highnoise/ # cifar10_model_base/ #RES_all_train_TT_net_cifar/2022_06_07_13_52_08_518885/ #res_finaux/cifar10_model_base/ #CIFAR10_model_base_highnoise/ #cifar10_model_base/ #RES_all_train_TT_net_cifar/2022_05_03_20_16_37_290814/ #2022_05_03_23_19_57_042429/ #2022_05_03_22_50_41_416226/  #2022_05_03_20_16_37_290814/  #2022_05_03_11_29_18_858160/
+    #res_finaux/CIFAR10_model_base_highnoise/ #cifar10_model_base/
+    #"res_finaux/BIG_CIFAR10_model_base_lownoise/"
+  #"res_finaux/BIG_CIFAR10_model_base_highnoise/"
+  #RES_all_train_TT_net_cifar/2022_04_30_19_16_54_348003/  #2022_04_30_23_57_37_537158/ #2022_04_30_19_16_54_348003/ #./res_finaux/CIFAR10_model_base_highnoise/ #res_finaux/cifar10_model_base/
+
+NN2TT:
+  count: False
+  all_bits_atack_possible: [ ]
+  all_bits_atack_possibleDC: [ ]
+  with_contradiction: False
+  Transform_normal_model: Yes
+  Transform_pruned_model: No
+  Transform_normal_model_with_filtering: No
+  Transform_pruned_model_with_filtering: No
+  filter_occurence: 5
+  block_occurence: 1
+  Add_noise: True
+  proportion: 0.1
+  proba: 0.05
+  filter_out: [ ] #[14, 18,5,12,13] #[8,10,35] for cifar10_vf
+
+verify:
+  loss: "linf" #lp
+  bits: [ 0,0,0 ] #case lp, bit attack
+  key_preprocessing: "all_random" #"all_ones", "all_zeros", "all_random", "key"
+  model_to_eval: normal # normal - prune - filtered - prune_filtered
+  type_verification: totale # rapide
+  mode_verification: SAT # SAT / MaxSAT / theorique / DP
+  ratio_incomplet: 0
+  attack_eps: 8
+  attack_infer: 0
+  attack_verif: 1
+  offset: 0
+  coef_multiplicateur_data: 10
+  encoding_type: 0
+  sat_solver: Minicard # Glucose3 Glucose4 Minicard Minisat22 Lingeling
+  time_out: 120
+  method_verify_complet: No
+  method_verify_incomplete: formula # DP / formula

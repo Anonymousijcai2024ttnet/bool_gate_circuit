@@ -1,0 +1,101 @@
+general:
+  seed: 0
+  device: "cuda"
+  device_ids: [ 3 ]
+  models_path: RES_all_train_TT_net/ #path to save model and logs
+  num_workers: 2
+  checkpoint: 1
+
+model:
+  famille: TTnet #model_general # model_general
+  cbd: "" # 1,3 or ""
+  first_layer: BNs #BNs #bin float binpos
+  quant_step: 0.61
+  preprocessing_CNN: [ 1,5,2,2 ] # filter, kernel_size, stride, padding
+  last_layer: binpos #bin, binpos
+  g_remove_last_bn: False
+  type_blocks: [ "TTblock", "TTblock" ] #["TTblock2", "TTblock", "TTblock2", "TTblock"] # TTblock, multihead_TTblock, multihead_TTblock_mini, multihead_TTblock_big
+  Blocks_filters_output: [ 48,48 ] #[30, 30, 30, 60] # number of filters in each block
+  Blocks_amplifications: [ 8,8 ] #[8,8,8,8] # amplification in each block
+  Blocks_strides: [ 2,1 ] #[3,2] #[2,1,1,1] # stride in the first layer in each block
+  type_first_layer_block: float
+  kernel_size_per_block: [ 3,3 ] #[3,2] #[3,2,3,2]
+  groups_per_block: [ 1,1 ] #[1,2] #[1,2,1,2]
+  padding_per_block: [ 0,0 ] #[0,0,0,0]
+  kernel_size_per_block_multihead: (3,2,2)
+  groups_per_block_multihead: (1,2,2)
+  paddings_per_block_multihead: (0,0,0)
+  thr_bin_act: [ 0.0,0.0,0.0 ] #[0.1, 0.3, 0.3, 0.3, 0.3]
+
+train:
+  n_epoch: 90
+  adv_epsilon: min(epoch/45, 1)*0.0 #min(epoch/45, 1)*0.2 min(epoch/45, 0)*0.0
+  adv_step: min(epoch/25,0.9)*10+1 #min(epoch/22,0.9)*10+1 min(epoch/22,0.)*0+0
+  lr: 0.005
+  data_augmentation: False
+
+eval:
+  thr_bin_act_test: [ 0.0, 0.0, 0.0 ]
+  jeudelavie: No
+  batch_size_test: 100
+  pruning: Yes
+  coef_mul: 100
+  path_load_model: ./res_finaux/MNIST_model_base_highnoise/
+  #./res_finaux/2022_04_29_19_16_41_363915/
+  #RES_all_train_TT_net/2022_12_10_18_21_42_135953/
+  #RES_all_train_TT_net/2022_12_10_15_20_18_454466/
+  # ./res_finaux/MNIST_model_base_highnoise/   # ./RES_all_train_TT_net/2022_11_29_19_33_15_739611/
+  # RES_all_train_TT_net/2022_12_02_20_03_51_330662 cnn + size9
+  #2022_11_29_05_03_50_027717/ train 200 epochs
+  #2022_11_29_15_55_32_110006/ train 200 epochs + BINposneg
+  #2022_11_29_19_33_15_739611/ train 200 epochs + BINposneg + CNN
+  #2022_11_30_09_40_33_198093/ train 200 epochs + MLP
+  #2022_11_29_11_40_46_630928/ train 200 epochs + CNN + MLP
+  # 2022_11_30_11_36_54_673288/ sans BN - 200epochs +
+  #./res_finaux/MNIST_model_base_highnoise/
+
+
+  #./res_finaux/MNIST_model_base/  #./RES_all_train_TT_net/2022_04_20_17_09_41_053063/ #./res_finaux/MNIST_model_base/
+  #RES_all_train_TT_net/TFHE/MNIST_16filters_training_simple_v2/ #RES_all_train_TT_net/2022_03_24_09_54_13_751584/ #RES_all_train_TT_net/2022_03_24_12_57_29_273672/ #RES_all_train_TT_net/2022_03_24_09_54_13_751584/ #RES_all_train_TT_net/2022_03_24_10_57_55_658906/
+  #RES_all_train_TT_net/2022_03_24_09_54_13_751584/ #RES_all_train_TT_net/2022_03_23_15_59_30_299890/ #RES_all_train_TT_net/version_random_step/Acc96_trainingPGD_90epochs_40filters_binpos_plusnoisy/  #RES_all_train_TT_net/1st_working_MNIST_NOTSCALABLE/ #2022_03_21_19_47_48_559354/ #version_random_step/MNIST_n9_withoutPGD/ #2022_02_22_12_37_48_840895/ #RES_all_train/cifar10_high_noise/
+
+get_TT:
+  dontcare_trainset: True
+  compute_full_dictionnary_3_puissance_n: True
+
+
+NN2TT:
+  with_contradiction: False
+  count: False
+  all_bits_atack_possibleDC: [ ]
+  all_bits_atack_possible: [ ]
+  #[(0,6, 22),(0,6, 24),(0,8, 18),(0,8, 20),(0,8, 22),(0, 14, 20),(0, 16,6),(0, 16, 18),(0, 16, 20),(0, 18,8),(0, 18, 18),(0, 8, 14),(0, 12, 5),(0, 12, 8),(0, 12, 13),(0, 13, 15),(0, 14, 12),(0, 14, 13),(0, 15, 13),(0, 17, 8),(0, 17, 20),(0, 18, 10),(0, 18, 17),(0, 18, 18),(0, 21, 12),(0, 22, 8)]
+  Transform_normal_model: Yes
+  Transform_pruned_model: No
+  Transform_normal_model_with_filtering: No
+  Transform_pruned_model_with_filtering: No
+  filter_occurence: 1
+  block_occurence: 0
+  Add_noise: True
+  proportion: 0.1
+  proba: 0.05
+
+verify:
+  loss: "linf" #lp    
+  bits: [ 0,0,0 ] #case lp, bit attack
+  start_pixel: 0
+  key_preprocessing: "all_ones" #"all_ones", "all_zeros", "all_random", "key"
+  model_to_eval: normal # normal - prune - filtered - prune_filtered
+  type_verification: totale # rapide
+  mode_verification: SAT # SAT / MaxSAT / theorique / DP
+  ratio_incomplet: 0
+  attack_eps: 0.3
+  attack_infer: 0.05
+  attack_verif: 0.1
+  offset: 0
+  coef_multiplicateur_data: 10
+  encoding_type: 0
+  sat_solver: Minicard # Glucose3 Glucose4 Minicard Minisat22 Lingeling
+  time_out: 120
+  method_verify_complet: No
+  method_verify_incomplete: formula # DP / formula
