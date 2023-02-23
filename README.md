@@ -1,4 +1,4 @@
-# Complete and Sound Formal Verification of Adversarial robustness of TTnet with generic SAT solver
+# TTnet as a Boolean Gate Circuit
 
 ## Overview
 
