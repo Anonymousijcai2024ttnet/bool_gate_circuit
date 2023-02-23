@@ -40,14 +40,7 @@ pip3 install -r requirements.txt
 
 ### Running Inference
 
-The pretrained models and truth tables can be downloaded [here](XXX).
-
-
-To run the inference, use the following command:
-
-```
-python3 main.py
-```
+In progress
 
 
 
