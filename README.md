@@ -26,7 +26,7 @@ The performances are:
 |       | Accuracy | Total number of gates for the filters | Size Circuit (OP) | 
 |-------|:--------:|:-------------------------------------:|:-----------------:|
 | Small |  54.49%  |                 3469                  |       804K        |    
-| Big   |  70.23%   |                737280                 |       671M        |    
+| Big   |  70.75%  |                737280                 |       671M        |    
 
 
 
