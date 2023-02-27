@@ -16,16 +16,17 @@ The following datasets have been evaluated:
 The performances are:
 
 |       | Accuracy | Total number of gates for the filters | Size Circuit (OP) | 
-|-------|:--------:|:------------------------------------:|:-----------------:|
-| Small |  97.26%  |                 477                  |        37K        |    
-| Big   |  98.16%   |                 2694                 |       203K        | 
+|-------|:--------:|:-------------------------------------:|:-----------------:|
+| Small |  97.26%  |                  477                  |        37K        |    
+| Big   |  98.16%  |                 2694                  |       203K        | 
 
 ### CIFAR10
 The performances are:
 
 |       | Accuracy | Total number of gates for the filters | Size Circuit (OP) | 
-|-------|:--------:|:------------------------------------:|:-----------------:|
-| Small |  54.49%  |                 3469                 |       804K        |    
+|-------|:--------:|:-------------------------------------:|:-----------------:|
+| Small |  54.49%  |                 3469                  |       804K        |    
+| Big   |  70.23%   |                737280                 |       671M        |    
 
 
 

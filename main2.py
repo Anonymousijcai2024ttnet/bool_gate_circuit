@@ -100,7 +100,7 @@ args = parser.parse_args()
 args.preprocessing_BN = 1
 args.batch_size_test = 100
 
-args.path_save_model = "./models_res/CIFAR10_BIG/"#args.path_save_model + "/"
+args.path_save_model = "models_res/CIFAR10_big/"  #args.path_save_model + "/"
 args.path_load_model = args.path_save_model + "/"
 device = "cpu"  # torch.device("cuda:" + str(args.device_ids[0]) if torch.cuda.is_available() else "cpu")
 seed = args.seed
@@ -145,45 +145,13 @@ items = [filter_no for filter_no in range(args.Blocks_filters_output[1])]
 tot = 0
 correct = 0
 
-bit_q = 8
-W = quantization_int(model_train.features[6].weight.data, bit_q)
-b = quantization_int(model_train.features[6].bias.data, bit_q)
-np.savetxt(args.path_save_model  + "/W_q.txt", W)
-np.savetxt(args.path_save_model  + "/b_q.txt", b)
-bit_q = 8
-W2 = quantization_int(model_train.features[10].weight.data, bit_q)
-b2 = quantization_int(model_train.features[10].bias.data, bit_q)
-np.savetxt(args.path_save_model  + "/W_q2.txt", W2)
-np.savetxt(args.path_save_model  + "/b_q2.txt", b2)
-del W, b, W2, b2
 
-W = np.loadtxt(args.path_save_model  + "/W_q.txt")
-b = np.loadtxt(args.path_save_model  + "/b_q.txt")
-W2 = np.loadtxt(args.path_save_model  + "/W_q2.txt")
-b2 = np.loadtxt(args.path_save_model  + "/b_q2.txt")
-
-lin_4bit = torch.nn.Linear(W.shape[0], W.shape[1], bias=True).eval()
-lin_4bit.weight.data= torch.Tensor(W)
-lin_4bit.bias.data= torch.Tensor(b)
-lin_4bit2 = torch.nn.Linear(W2.shape[0], W2.shape[1], bias=True).eval()
-lin_4bit2.weight.data= torch.Tensor(W2)
-lin_4bit2.bias.data= torch.Tensor(b2)
-
-print(torch.sum(model_train.features[1].weight_bin.abs().data, dim=(1,2,3)))
-ok
 
 with torch.no_grad():
     for indexicicici, data in enumerate(tk0):
         nSize = args.kernel_size_per_block[0] ** 2 * args.groups_per_block[0]
         inputs, labels = data
-        X = model_train.features[0](inputs)
-        for i in range(1,6):
-            X = model_train.features[i](X)
-        X = lin_4bit(X)
-        X = model_train.features[8](X)
-        X = model_train.features[9](X)
-        X = lin_4bit2(X)
-        p = model_train.features[12](X)
+        p = model_train(inputs)
         pred = torch.argmax(p, dim=1)
         tot += labels.shape[0]
         imagev2 = inputs[(pred == labels.to(device)), :, :, :]
