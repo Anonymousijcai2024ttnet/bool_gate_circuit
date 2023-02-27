@@ -43,10 +43,10 @@ pip3 install -r requirements.txt
 
 ```commandline
 # MNIST SMALL
-python3 main.py --Blocks_filters_output '[8,8]'
+python3 main.py --Blocks_filters_output '[8,8]' --path_load_model './models_res/MNIST_small/'
 
 # MNIST BIG
-python3 main.py --Blocks_filters_output '[64,64]'
+python3 main.py --Blocks_filters_output '[64,64]' --path_load_model './models_res/MNIST_big/'
 
 # CIFAR10 SMALL
 python3 main.py
