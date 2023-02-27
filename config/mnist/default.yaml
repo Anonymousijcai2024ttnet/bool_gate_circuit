@@ -10,16 +10,16 @@ model:
   famille: TTnet #model_general # model_general
   cbd: "" # 1,3 or ""
   first_layer: BNs #BNs #bin float binpos
-  quant_step: 0.61
+  quant_step: 0.1
   preprocessing_CNN: [ 1,5,2,2 ] # filter, kernel_size, stride, padding
   last_layer: binpos #bin, binpos
   g_remove_last_bn: False
   type_blocks: [ "TTblock", "TTblock" ] #["TTblock2", "TTblock", "TTblock2", "TTblock"] # TTblock, multihead_TTblock, multihead_TTblock_mini, multihead_TTblock_big
-  Blocks_filters_output: [ 48,48 ] #[30, 30, 30, 60] # number of filters in each block
+  Blocks_filters_output: [ 64,64 ] #[30, 30, 30, 60] # number of filters in each block
   Blocks_amplifications: [ 8,8 ] #[8,8,8,8] # amplification in each block
   Blocks_strides: [ 2,1 ] #[3,2] #[2,1,1,1] # stride in the first layer in each block
   type_first_layer_block: float
-  kernel_size_per_block: [ 3,3 ] #[3,2] #[3,2,3,2]
+  kernel_size_per_block: [ 6,7 ] #[3,2] #[3,2,3,2]
   groups_per_block: [ 1,1 ] #[1,2] #[1,2,1,2]
   padding_per_block: [ 0,0 ] #[0,0,0,0]
   kernel_size_per_block_multihead: (3,2,2)
@@ -40,7 +40,7 @@ eval:
   batch_size_test: 100
   pruning: Yes
   coef_mul: 100
-  path_load_model: ./res_finaux/MNIST_model_base_highnoise/
+  path_load_model: ./models_res/MNIST_big/
   #./res_finaux/2022_04_29_19_16_41_363915/
   #RES_all_train_TT_net/2022_12_10_18_21_42_135953/
   #RES_all_train_TT_net/2022_12_10_15_20_18_454466/

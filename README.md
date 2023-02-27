@@ -17,15 +17,15 @@ The performances are:
 
 |       | Accuracy | Total number of gates for the filter | Size Circuit (OP) | 
 |-------|:--------:|:------------------------------------:|:-----------------:|
-| Small |  97.44%  |                 477                  |        37K        |    
-| Big   |  98.39%  |                 2694                 |       203K        | 
+| Small |  97.26%  |                 477                  |        37K        |    
+| Big   |  98.16%   |                 2694                 |       203K        | 
 
 ### CIFAR10
 The performances are:
 
 |       | Accuracy | Total number of gates for the filter | Size Circuit (OP) | 
 |-------|:--------:|:------------------------------------:|:-----------------:|
-| Small |  54.49%  |                 3469                 |       804K        |    
+| Small |  53.01%  |                 3469                 |       804K        |    
 
 
 
@@ -40,7 +40,18 @@ pip3 install -r requirements.txt
 
 ### Running Inference
 
-In progress
+```commandline
+# MNIST SMALL
+python3 main.py --Blocks_filters_output '[8,8]'
+
+# MNIST BIG
+python3 main.py --Blocks_filters_output '[64,64]'
+
+# CIFAR10 SMALL
+python3 main.py
+
+
+```
 
 
 

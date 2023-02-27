@@ -13,7 +13,7 @@ from config.config import str2bool, two_args_str_int, str2list, \
     transform_input_filters, transform_input_lr
 from src.inference import BN_eval_MNIST, BN_eval_CIFAR10, load_cnf_dnf_block
 from src.inference import get_mapping_filter, Binarize01Act, InputQuantizer, load_data, \
-    infer_normal_withPYTHON
+    infer_normal_withPYTHON, quantization_int
 from src.inference import load_TT_TTnoise
 
 config_general = Config(path="config/")
@@ -61,7 +61,7 @@ parser.add_argument("--n_epoch", default=config.train.n_epoch, type=two_args_str
 parser.add_argument("--lr", default=config.train.lr, type=transform_input_lr)
 
 parser.add_argument("--batch_size_test", default=config.eval.batch_size_test, type=two_args_str_int)
-parser.add_argument("--jeudelavie", default=config.eval.jeudelavie, type=str2bool)
+#parser.add_argument("--jeudelavie", default=config.eval.jeudelavie, type=str2bool)
 parser.add_argument("--pruning", default=config.eval.pruning, type=str2bool)
 parser.add_argument("--coef_mul", default=config.eval.coef_mul, type=two_args_str_int)
 parser.add_argument("--path_save_model", default=config.eval.path_load_model, type=two_args_str_int)
@@ -126,7 +126,18 @@ print()
 print(args.path_save_model)
 dataloaders, testset, nclass = load_data(args)
 
-all_CNFG = {i: {j: [] for j in range(10)} for i in range(10)}
+# model = (ModelHelper.
+#          create_with_load(args.path_save_model + "/last.pth").
+#          to(device).
+#          eval())
+# # print(model)
+# import copy
+# model_train = copy.deepcopy(model)
+# model.to(device)
+# model_train.to(device)
+# model_train.eval()
+
+# print(model)
 
 liste_fonctions1 = []
 liste_fonctions1.append(InputQuantizer(args.quant_step))
@@ -171,28 +182,39 @@ preprocessing_withoutact_P = nn.Sequential(*liste_fonctions_P).eval()
 preprocessing_withoutact_N = nn.Sequential(*liste_fonctions_N).eval()
 
 # Last layer
-Wbin_scale = 1.0 * (np.loadtxt(args.path_load_model + "/Wbin_scale.txt").astype("f"))
-W_LR = 1.0 * (np.loadtxt(args.path_load_model + "/Wbin.txt").astype("f"))
-scale_WLR = 1.0 * (np.loadtxt(args.path_load_model + "/gamma_Wbin.txt").astype("f"))
-b_LR = 1.0 * (np.loadtxt(args.path_load_model + "/biais.txt").astype("f"))
+#Wbin_scale = 1.0 * (np.loadtxt(args.path_load_model + "/Wbin_scale.txt").astype("f"))
+#W_LR = 1.0 * (np.loadtxt(args.path_load_model + "/Wbin.txt").astype("f"))
+#scale_WLR = 1.0 * (np.loadtxt(args.path_load_model + "/gamma_Wbin.txt").astype("f"))
+#b_LR = 1.0 * (np.loadtxt(args.path_load_model + "/biais.txt").astype("f"))
 # ok
 
 # Unfold and Mapping
 unfold_all = {}
 for numblockici in range(len(args.type_blocks)):
-    unfold_all[numblockici] = [
+    if args.kernel_size_per_block[numblockici]==6:
+        unfold_all[numblockici] = [
+            torch.nn.Unfold(kernel_size=(3,2),
+                            stride=args.Blocks_strides[numblockici],
+                            padding=args.padding_per_block[numblockici])]
+    elif args.kernel_size_per_block[numblockici]==7:
+        unfold_all[numblockici] = [
+            torch.nn.Unfold(kernel_size=(2,3),
+                            stride=args.Blocks_strides[numblockici],
+                            padding=args.padding_per_block[numblockici])]
+    else:
+        unfold_all[numblockici] = [
         torch.nn.Unfold(kernel_size=args.kernel_size_per_block[numblockici], stride=args.Blocks_strides[numblockici],
                         padding=args.padding_per_block[numblockici])]
 
 mapping_filter, input_dim = get_mapping_filter(args)
 print(mapping_filter)
 if config_general.dataset == "CIFAR10":
-    for i in range(16):
+    for i in range(20):
         mapping_filter[0][i] = 0
-    for i in range(16):
-        mapping_filter[0][i + 16] = 1
-    for i in range(16):
-        mapping_filter[0][i + 32] = 2
+    for i in range(20):
+        mapping_filter[0][i + 20] = 1
+    for i in range(20):
+        mapping_filter[0][i + 40] = 2
 
 print(mapping_filter)
 putawayliteral = []
@@ -206,23 +228,40 @@ items = [filter_no for filter_no in range(args.Blocks_filters_output[1])]
 tot = 0
 correct = 0
 
+
+
+# bit_q = 4
+# W = quantization_int(model_train.features[6].weight.data, bit_q)
+# b = quantization_int(model_train.features[6].bias.data, bit_q)
+# np.savetxt(args.path_save_model  + "/W_q.txt", W)
+# np.savetxt(args.path_save_model  + "/b_q.txt", b)
+# del W, b
+
+W = np.loadtxt(args.path_save_model  + "/W_q.txt")
+b = np.loadtxt(args.path_save_model  + "/b_q.txt")
+
+lin_4bit = torch.nn.Linear(W.shape[0], W.shape[1], bias=True)
+lin_4bit.weight.data= torch.Tensor(W)
+lin_4bit.bias.data= torch.Tensor(b)
+
 with torch.no_grad():
     for indexicicici, data in enumerate(tk0):
-        if int(args.coef_multiplicateur_data) * (int(args.offset) + 1) > indexicicici >= int(
-                args.coef_multiplicateur_data) * int(args.offset):
-            nSize = args.kernel_size_per_block[0] ** 2 * args.groups_per_block[0]
-            inputs, labels = data
-            predicted, res_all_tensorinput_block, res_all_tensoroutput_block, \
-                shape_all_tensorinput_block, shape_all_tensoroutput_block, \
-                res_all_tensorinput_block_unfold = infer_normal_withPYTHON(inputs, preprocessing,
-                                                                           device, unfold_all, args,
-                                                                           mapping_filter, Wbin_scale, b_LR,
-                                                                           array_block_0,
-                                                                           array_block_1, items, putawayliteral)
-            tot += labels.shape[0]
-            predicted = torch.Tensor(predicted).to(device)
-            imagev2 = inputs[(predicted == labels.to(device)), :, :, :]
-            labelrefv2 = labels[(predicted == labels.to(device))].clone().detach().cpu().numpy().astype("i")
-            correct += labelrefv2.shape[0]
+        nSize = args.kernel_size_per_block[0] ** 2 * args.groups_per_block[0]
+        inputs, labels = data
+        #p = model_train(inputs)
+        predicted, res_all_tensorinput_block, res_all_tensoroutput_block, \
+            shape_all_tensorinput_block, shape_all_tensoroutput_block, \
+            res_all_tensorinput_block_unfold = infer_normal_withPYTHON(inputs, preprocessing,
+                                                                       device, unfold_all, args,
+                                                                       mapping_filter, array_block_0,
+                                                                       array_block_1, items, putawayliteral)
+        tot += labels.shape[0]
+        predicted = torch.Tensor(predicted).to(device)
+        p = lin_4bit(predicted)
+        pred = torch.argmax(p, dim=1)
+        #print(pred, labels.shape)
+        imagev2 = inputs[(pred == labels.to(device)), :, :, :]
+        labelrefv2 = labels[(pred == labels.to(device))].clone().detach().cpu().numpy().astype("i")
+        correct += labelrefv2.shape[0]
 
 print("Accuracy: ", correct / tot)

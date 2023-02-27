@@ -1,1 +1,1 @@
-dataset: MNIST # CIFAR10 MNIST
+dataset: CIFAR10 # CIFAR10 MNIST

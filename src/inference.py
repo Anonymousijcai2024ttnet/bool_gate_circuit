@@ -293,13 +293,60 @@ def load_cnf_dnf(args):
 import torchvision
 import torchvision.transforms as transforms
 
+class MNISTRemoveBorderTransform:
+    def __call__(self, image: torch.Tensor) -> torch.Tensor:
+        horizontal_black_lines = (image == 0.).all(dim=2)
+        top_black = 0
+        while horizontal_black_lines[0, top_black] and top_black < 14:
+            top_black += 1
+        bottom_black = 0
+        while horizontal_black_lines[0, -bottom_black - 1] and bottom_black < 14:
+            bottom_black += 1
+        assert top_black + bottom_black >= 8, (top_black, bottom_black)
+        while top_black + bottom_black >= 10:
+            if top_black > 0:
+                top_black -= 1
+            if bottom_black > 0:
+                bottom_black -= 1
+        if top_black + bottom_black == 9:
+            if top_black > 0:
+                top_black -= 1
+            else:
+                bottom_black -= 1
+        assert top_black + bottom_black == 8, (top_black, bottom_black)
+        image = image[:, top_black:28 - bottom_black]
+
+        vertical_black_lines = (image == 0.).all(dim=1)
+        left_black = 0
+        while vertical_black_lines[0, left_black] and left_black < 14:
+            left_black += 1
+        right_black = 0
+        while vertical_black_lines[0, -right_black - 1] and right_black < 14:
+            right_black += 1
+        assert left_black + right_black >= 8, (left_black, right_black)
+        while left_black + right_black >= 10:
+            if left_black > 0:
+                left_black -= 1
+            if right_black > 0:
+                right_black -= 1
+        if left_black + right_black == 9:
+            if left_black > 0:
+                left_black -= 1
+            else:
+                right_black -= 1
+        assert left_black + right_black == 8, (left_black, right_black)
+        image = image[:, :, left_black:28 - right_black]
+
+        return image
 
 def load_data(args):
     nclass = 10
+    transform_test_MNIST = transforms.Compose([
+        transforms.ToTensor(), MNISTRemoveBorderTransform()])
     transform_test = transforms.Compose([
         transforms.ToTensor()])
     if args.dataset == "MNIST":
-        testset = torchvision.datasets.MNIST("~/datasets/mnist", transform=transform_test, train=False, download=True)
+        testset = torchvision.datasets.MNIST("~/datasets/mnist", transform=transform_test_MNIST, train=False, download=True)
         nclass = 10
     elif args.dataset == "CIFAR10":
         testset = torchvision.datasets.CIFAR10("~/datasets/CIFAR10", transform=transform_test, train=False,
@@ -424,7 +471,7 @@ def infer_normal(inputs, preprocessing, device, unfold_all, args, mapping_filter
            shape_all_tensorinput_block, shape_all_tensoroutput_block
 
 
-def infer_normal_withPYTHON(inputs, preprocessing, device, unfold_all, args, mapping_filter, W_LR, b_LR,
+def infer_normal_withPYTHON(inputs, preprocessing, device, unfold_all, args, mapping_filter,
                             array_block_0, array_block_1, items, putawayliteral=[],
                             bit1_I=[],
                             bit1_L=[],
@@ -446,7 +493,12 @@ def infer_normal_withPYTHON(inputs, preprocessing, device, unfold_all, args, map
     shape_all_tensorinput_block = {}
     shape_all_tensoroutput_block = {}
     for block_occurence in range(len(args.Blocks_filters_output)):  ##Each layer
-        nSize = args.kernel_size_per_block[block_occurence] ** 2 * args.groups_per_block[block_occurence]
+        if args.kernel_size_per_block[block_occurence] == 6:
+            nSize = 6 * args.groups_per_block[block_occurence]
+        elif args.kernel_size_per_block[block_occurence] == 7:
+            nSize = 6 * args.groups_per_block[block_occurence]
+        else:
+            nSize = args.kernel_size_per_block[block_occurence] ** 2 * args.groups_per_block[block_occurence]
         iterici = 0
         filtericitot = args.Blocks_filters_output[block_occurence]
         unfold_block = unfold_all[block_occurence][iterici]
@@ -468,6 +520,7 @@ def infer_normal_withPYTHON(inputs, preprocessing, device, unfold_all, args, map
                                                 :]
                 input_vu_par_cnn_et_sat_starting = unfold_block(input_vu_par_cnn_avant_unfold).cpu().numpy().astype("i")
                 H = int(np.sqrt(input_vu_par_cnn_et_sat_starting.shape[-1]))
+                #print(H)
                 input_vu_par_cnn_et_sat = input_vu_par_cnn_et_sat_starting.transpose(1, 0, 2).reshape(nSize, -1)
                 #for kkb0 in range(nSize):
                 #    if (block_occurence, filter_occurenceb0, kkb0) in putawayliteral:
@@ -496,7 +549,7 @@ def infer_normal_withPYTHON(inputs, preprocessing, device, unfold_all, args, map
             imgs_debut = torch.Tensor(
                 output_var_unfold_vf.reshape(args.Blocks_filters_output[block_occurence], batch_size_test,
                                              H,
-                                             H).transpose(1, 0, 2, 3)).to(
+                                             H+1).transpose(1, 0, 2, 3)).to(
                 device)
 
 
@@ -586,56 +639,53 @@ def infer_normal_withPYTHON(inputs, preprocessing, device, unfold_all, args, map
                                                                H2,
                                                                H2).transpose(1, 0, 2, 3)
 
+            out2 = torch.Tensor(imgs_debut)
+            out = torch.Tensor(imgs_fin)
+            #print(out2.shape, out.shape)
+            padding = out2.clone()
+            if out2.shape[1] != out.shape[1]:
+                for _ in range(int((out.shape[1] - out2.shape[1]) / out2.shape[1])):
+                    out2 = torch.cat((out2, padding), 1)
+            #ok
 
-            # for FB0 in tqdm(range(0,48,4)):
-            #     if max_value_B1_thr_flow[FB0]>14*14/2:
-            #         offset = 0
-            #     else:
-            #         offset = 0
-            #     boundB0ici = max_value_B1_thr_flow[FB0]+offset
-            #     if boundB0ici is not None:
-            #         bound = np.sum(imgs_fin[:, FB0, :, :] == 1, axis=(1, 2))
-            #         for batchici in range(batch_size_test):
-            #             if bound[batchici]!=boundB0ici:
-            #                 nbre2foistoadd = abs(bound[batchici] - boundB0ici)
-            #                 if boundB0ici > bound[batchici]:
-            #                     value2add = 1
-            #                 else:
-            #                     value2add = 0
-            #                 #while nbre2foistoadd!=0:
-            #                     #print(nbre2foistoadd)
-            #                 for xiterici in range(2,6):
-            #                     if nbre2foistoadd != 0:
-            #                         for yiterici in range(2,6):
-            #                         #print(nbre2foistoadd)
-            #                             if nbre2foistoadd !=0:
-            #                                 if imgs_fin[batchici, FB0, xiterici, yiterici]!=value2add:
-            #                                     imgs_fin[batchici, FB0, xiterici, yiterici] =value2add
-            #                                     nbre2foistoadd=nbre2foistoadd-1
-            #                             else:
-            #                                 break
-            #                     else:
-            #                         break
+            # if out.shape[-1]!=out2.shape[-1]:
+            # print(out.shape, out2.shape, x.shape)
+
+            if out2.shape[-1] != out.shape[-1]:
+                inttouse = int(abs(out2.shape[-1] - out.shape[-1]))
+                out2 = out2[:, :, :-inttouse+1, :-inttouse]
+
+            # if (x.shape[-1] == 32) or (x.shape[-1] == 14):
+            #    out2 = out2[:, :, :-1, :-1]
+            # print(out.shape, out2.shape, x.shape)
+
+            # padding = torch.autograd.Variable(y)
+            #print(out2.shape, out.shape)
+            outf = torch.cat((out, out2), dim=1)
+            n, c, w, h = outf.shape
+            outf = outf.view(n, 2, int(c / 2), w, h)
+            outf = outf.transpose_(1, 2).contiguous()
+            outf = outf.view(n, c, w, h)
 
 
 
 
 
             res_all_tensorinput_block[block_occurence] = deepcopy(imgs_debut)
-            res_all_tensoroutput_block[block_occurence] = deepcopy(imgs_fin)
-            shape_all_tensorinput_block[block_occurence] = [imgs_debut.shape[1:]]
-            shape_all_tensoroutput_block[block_occurence] = [imgs_fin.shape[1:]]
+            res_all_tensoroutput_block[block_occurence] = deepcopy(outf)
+            shape_all_tensorinput_block[block_occurence] = [outf.shape[1:]]
+            shape_all_tensoroutput_block[block_occurence] = [outf.shape[1:]]
 
-    feature_vector = imgs_fin.reshape(batch_size_test, -1).astype(
-        'i').transpose()
+    feature_vector = outf.reshape(batch_size_test, -1).numpy().astype(
+        'i')#.transpose()
     #bit1_F = [17, 79, 164, 184, 213, 278, 416, 571, 767, 858, 1157, 1741, 2034, 2088]
 
     #for xposval1 in bit1_F:
     #    feature_vector[xposval1, :] = input_value
 
-    V_ref = np.dot(W_LR, feature_vector).transpose() + b_LR
-    predicted = np.argmax(V_ref, axis=-1)
-    return predicted, res_all_tensorinput_block, res_all_tensoroutput_block, \
+    #V_ref = np.dot(W_LR, feature_vector).transpose() + b_LR
+    #predicted = np.argmax(V_ref, axis=-1)
+    return feature_vector, res_all_tensorinput_block, res_all_tensoroutput_block, \
            shape_all_tensorinput_block, shape_all_tensoroutput_block, res_all_tensorinput_block_unfold
 
 
@@ -1582,3 +1632,22 @@ def load_cnf_dnf_block(args):
 
 
     return np.array(all_dnf_b0), np.array(all_dnf_b1), nogolist
+
+
+
+import numpy as np
+def quantization(x, s, z, alpha_q, beta_q):
+    x_q = np.round(1 / s * x + z, decimals=0)
+    x_q = np.clip(x_q, a_min=alpha_q, a_max=beta_q)
+    return x_q
+
+def quantization_int(x, b=4):
+    alpha_q = -2 ** (b - 1)
+    beta_q = 2 ** (b - 1) - 1
+    alpha = torch.min(x)
+    beta = torch.max(x)
+    s = (beta - alpha) / (beta_q - alpha_q)
+    z = int((beta * alpha_q - alpha * beta_q) / (beta - alpha))
+    x_q = quantization(x, s, z, alpha_q=alpha_q, beta_q=beta_q)
+    x_q = x_q.numpy().astype(np.int8)
+    return x_q
