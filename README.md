@@ -41,6 +41,8 @@ pip3 install -r requirements.txt
 
 ### Running Inference
 
+For CIFAR10 Big model, you need to unzip the model to reach 70.75%, otherwise you reach 70.2%
+
 ```commandline
 # MNIST SMALL
 python3 main.py --Blocks_filters_output '[8,8]' --path_load_model './models_res/MNIST_small/'
