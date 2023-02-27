@@ -51,6 +51,9 @@ python3 main.py --Blocks_filters_output '[64,64]'
 # CIFAR10 SMALL
 python3 main.py
 
+# CIFAR10 BIG
+python3 main2.py
+
 
 ```
 
