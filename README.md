@@ -1,4 +1,4 @@
-# Complete and Sound Formal Verification of Adversarial robustness of TTnet with generic SAT solver
+# TTnet as a Boolean Logic Gate Circuit
 
 ## Overview
 
@@ -15,7 +15,7 @@ The following datasets have been evaluated:
 
 The performances are:
 
-|       | Accuracy | Total number of gates for the filter | Size Circuit (OP) | 
+|       | Accuracy | Total number of gates for the filters | Size Circuit (OP) | 
 |-------|:--------:|:------------------------------------:|:-----------------:|
 | Small |  97.26%  |                 477                  |        37K        |    
 | Big   |  98.16%   |                 2694                 |       203K        | 
@@ -23,9 +23,9 @@ The performances are:
 ### CIFAR10
 The performances are:
 
-|       | Accuracy | Total number of gates for the filter | Size Circuit (OP) | 
+|       | Accuracy | Total number of gates for the filters | Size Circuit (OP) | 
 |-------|:--------:|:------------------------------------:|:-----------------:|
-| Small |  53.01%  |                 3469                 |       804K        |    
+| Small |  54.49%  |                 3469                 |       804K        |    
 
 
 
